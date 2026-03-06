@@ -46,33 +46,33 @@ function LightboxModal({ item, onClose, onLike, onFavorite }) {
         exit={{ scale: 0.9, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         onClick={e => e.stopPropagation()}
-        style={{ background: '#1c1c1e', borderRadius: 28, overflow: 'hidden', maxWidth: 860, width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
+        style={{ background: '#fff', borderRadius: 28, overflow: 'hidden', maxWidth: 860, width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
       >
         <img src={item.img} alt={item.prompt} style={{ width: '100%', maxHeight: 480, objectFit: 'cover' }} />
         <div style={{ padding: '28px 32px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {item.tags.map(t => (
-                <span key={t} style={{ fontSize: 12, background: 'rgba(255,255,255,0.1)', color: '#aeaeb2', borderRadius: 980, padding: '3px 10px' }}>{t}</span>
+                <span key={t} style={{ fontSize: 12, background: 'rgba(0,0,0,0.06)', color: '#6e6e73', borderRadius: 980, padding: '3px 10px' }}>{t}</span>
               ))}
-              <span style={{ fontSize: 12, background: 'rgba(94,92,230,0.25)', color: '#a09ff5', borderRadius: 980, padding: '3px 10px' }}>{item.model}</span>
+              <span style={{ fontSize: 12, background: 'rgba(94,92,230,0.12)', color: '#5e5ce6', borderRadius: 980, padding: '3px 10px' }}>{item.model}</span>
             </div>
-            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', flexShrink: 0 }}>
+            <button onClick={onClose} style={{ background: 'rgba(0,0,0,0.06)', border: 'none', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#1d1d1f', flexShrink: 0 }}>
               <X size={16} />
             </button>
           </div>
-          <p style={{ fontSize: 15, color: '#e5e5ea', lineHeight: 1.7, margin: '0 0 20px', fontFamily: 'monospace' }}>{item.prompt}</p>
+          <p style={{ fontSize: 15, color: '#1d1d1f', lineHeight: 1.7, margin: '0 0 20px', fontFamily: 'monospace' }}>{item.prompt}</p>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <CopyButton text={item.prompt} />
             <button
               onClick={() => onLike(item.id)}
-              style={{ display: 'flex', alignItems: 'center', gap: 5, background: item.liked ? '#ff375f' : 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: 980, padding: '6px 14px', fontSize: 12, cursor: 'pointer', transition: 'all 0.2s' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, background: item.liked ? '#ff375f' : 'rgba(0,0,0,0.06)', color: item.liked ? '#fff' : '#1d1d1f', border: 'none', borderRadius: 980, padding: '6px 14px', fontSize: 12, cursor: 'pointer', transition: 'all 0.2s' }}
             >
               <Heart size={12} fill={item.liked ? '#fff' : 'none'} /> {item.likes}
             </button>
             <button
               onClick={() => onFavorite(item.id)}
-              style={{ display: 'flex', alignItems: 'center', gap: 5, background: item.favorited ? '#ff9500' : 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: 980, padding: '6px 14px', fontSize: 12, cursor: 'pointer', transition: 'all 0.2s' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, background: item.favorited ? '#ff9500' : 'rgba(0,0,0,0.06)', color: item.favorited ? '#fff' : '#1d1d1f', border: 'none', borderRadius: 980, padding: '6px 14px', fontSize: 12, cursor: 'pointer', transition: 'all 0.2s' }}
             >
               <Bookmark size={12} fill={item.favorited ? '#fff' : 'none'} /> {item.favorited ? '已收藏' : '收藏'}
             </button>
