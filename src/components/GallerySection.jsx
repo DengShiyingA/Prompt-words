@@ -37,7 +37,7 @@ function LightboxModal({ item, onClose, onLike, onFavorite }) {
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 99999,
-        background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(24px)',
+        background: 'rgba(255,255,255,0.3)', backdropFilter: 'blur(20px) saturate(1.8)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
       }}
     >
