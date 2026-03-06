@@ -1,6 +1,11 @@
 import { Client } from '@notionhq/client'
 
-const notion = new Client({ auth: process.env.NOTION_TOKEN })
+// 懒加载：等 .env 加载完再创建客户端
+let _notion = null
+function getNotion() {
+  if (!_notion) _notion = new Client({ auth: process.env.NOTION_TOKEN })
+  return _notion
+}
 
 // 缓存，60 秒过期
 const cache = new Map()
@@ -32,7 +37,7 @@ function text(prop) {
 
 // 直接获取某个 page 的最新图片 URL（用于代理接口，绕过过期问题）
 export async function fetchPageImageUrl(pageId) {
-  const page = await notion.pages.retrieve({ page_id: pageId })
+  const page = await getNotion().pages.retrieve({ page_id: pageId })
   return text(page.properties['Image'])
 }
 
@@ -47,7 +52,7 @@ export async function fetchGallery() {
   return cached('gallery', async () => {
     const dbId = process.env.NOTION_GALLERY_DB
     if (!dbId) return []
-    const response = await notion.databases.query({
+    const response = await getNotion().databases.query({
       database_id: dbId,
       filter: { property: 'Image', files: { is_not_empty: true } },
       sorts: [{ timestamp: 'created_time', direction: 'descending' }],
@@ -74,7 +79,7 @@ export async function fetchPrompts() {
   return cached('prompts', async () => {
     const dbId = process.env.NOTION_PROMPTS_DB
     if (!dbId) return {}
-    const response = await notion.databases.query({
+    const response = await getNotion().databases.query({
       database_id: dbId,
       sorts: [{ property: 'Category', direction: 'ascending' }],
     })
