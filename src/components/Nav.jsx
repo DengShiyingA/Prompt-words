@@ -6,7 +6,18 @@ export function Nav({ onFavClick }) {
   return (
     <nav className="nav">
       <div className="nav-content">
-        <span>&#9670;</span>
+        <a
+          href="https://dengshiying.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            color: '#1d1d1f', fontSize: 13, fontWeight: 500,
+            textDecoration: 'none', opacity: 0.7,
+          }}
+        >
+          ← 邓诗颖
+        </a>
         <span style={{ flex: 1 }} />
         <button
           onClick={onFavClick}
