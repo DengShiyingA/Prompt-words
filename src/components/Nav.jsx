@@ -1,7 +1,8 @@
 import { useScroll, useMotionValueEvent } from 'framer-motion'
 import { useState } from 'react'
+import { Bookmark } from 'lucide-react'
 
-export function Nav() {
+export function Nav({ onFavClick }) {
   return (
     <nav className="nav">
       <div className="nav-content">
@@ -11,7 +12,20 @@ export function Nav() {
             <li key={item}><a href="#">{item}</a></li>
           ))}
         </ul>
-        <span style={{ width: 16 }} />
+        <button
+          onClick={onFavClick}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: '#1d1d1f', fontSize: 12, padding: '4px 10px',
+            borderRadius: 980, transition: 'background 0.2s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.06)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+        >
+          <Bookmark size={14} />
+          我的收藏
+        </button>
       </div>
     </nav>
   )

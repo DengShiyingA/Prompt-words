@@ -1,16 +1,20 @@
 import './index.css'
+import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Nav, SubNav } from './components/Nav'
 import { Hero } from './components/Hero'
 import { GallerySection } from './components/GallerySection'
 import { PromptsSection } from './components/PromptsSection'
 import { Footer } from './components/Footer'
+import { FavoritesDrawer } from './components/FavoritesDrawer'
 import Admin from './pages/Admin'
 
 function Home() {
+  const [favOpen, setFavOpen] = useState(false)
+
   return (
     <>
-      <Nav />
+      <Nav onFavClick={() => setFavOpen(true)} />
       <div style={{ paddingTop: 'var(--nav-height)' }}>
         <SubNav />
         <Hero />
@@ -18,6 +22,7 @@ function Home() {
         <PromptsSection />
         <Footer />
       </div>
+      <FavoritesDrawer open={favOpen} onClose={() => setFavOpen(false)} />
     </>
   )
 }
