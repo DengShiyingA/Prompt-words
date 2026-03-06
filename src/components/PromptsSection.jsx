@@ -49,6 +49,7 @@ export function PromptsSection() {
 
   useEffect(() => {
     apiFetch('/api/prompts').then(r => r.json()).then(d => {
+      if (!d || typeof d !== 'object' || Array.isArray(d) || d.error) return
       setData(d)
       const first = Object.keys(d)[0]
       if (first) setActiveCategory(first)

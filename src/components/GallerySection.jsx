@@ -91,6 +91,7 @@ export function GallerySection() {
     try {
       const resp = await apiFetch('/api/gallery')
       const data = await resp.json()
+      if (!Array.isArray(data)) return
       setItems(data)
       if (selected) setSelected(data.find(i => i.id === selected.id) || null)
     } catch {}
