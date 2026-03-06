@@ -210,7 +210,7 @@ app.get('/api/videos', async (_req, res) => {
 // ?field=Cover 可指定取 Cover 字段而非默认 Image 字段
 app.get('/api/img/:id', async (req, res) => {
   try {
-    const field = req.query.field || 'Image'
+    const field = req.query.field || '图片 Image'
     const url = await fetchPageImageUrl(req.params.id, field)
     if (!url) return res.status(404).json({ error: '图片不存在' })
     res.redirect(302, url)
