@@ -36,9 +36,9 @@ function text(prop) {
 }
 
 // 直接获取某个 page 的最新图片 URL（用于代理接口，绕过过期问题）
-export async function fetchPageImageUrl(pageId) {
+export async function fetchPageImageUrl(pageId, field = 'Image') {
   const page = await getNotion().pages.retrieve({ page_id: pageId })
-  return text(page.properties['Image'])
+  return text(page.properties[field])
 }
 
 // ── Gallery：从 Notion 数据库读取图片 ────────────────────
@@ -61,6 +61,29 @@ export async function fetchGallery() {
       id: page.id,
       // img 指向我们自己的代理接口，避免 Notion 临时 URL 过期
       img: `/api/img/${page.id}`,
+      prompt: text(page.properties['Prompt']),
+      model: text(page.properties['Model']),
+      tags: text(page.properties['Tags']),
+      created_at: Math.floor(new Date(page.created_time).getTime() / 1000),
+    }))
+  })
+}
+
+// ── Videos：从 Notion 数据库读取视频提示词 ────────────────
+// 字段：Name(title) | Video_URL(url) | Cover(files) | Prompt(rich_text) | Model(select) | Tags(multi_select)
+export async function fetchVideos() {
+  return cached('videos', async () => {
+    const dbId = process.env.NOTION_VIDEO_DB
+    if (!dbId) return []
+    const response = await getNotion().databases.query({
+      database_id: dbId,
+      sorts: [{ timestamp: 'created_time', direction: 'descending' }],
+    })
+    return response.results.map(page => ({
+      id: page.id,
+      title: text(page.properties['Name']),
+      video_url: text(page.properties['Video_URL']),
+      cover: text(page.properties['Cover']) ? `/api/img/${page.id}?field=Cover` : null,
       prompt: text(page.properties['Prompt']),
       model: text(page.properties['Model']),
       tags: text(page.properties['Tags']),

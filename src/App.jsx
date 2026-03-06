@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Nav, SubNav } from './components/Nav'
 import { Hero } from './components/Hero'
 import { GallerySection } from './components/GallerySection'
-import { PromptsSection } from './components/PromptsSection'
+import { VideoSection } from './components/VideoSection'
 import { Footer } from './components/Footer'
 import { FavoritesDrawer } from './components/FavoritesDrawer'
 import Admin from './pages/Admin'
@@ -19,7 +19,7 @@ function Home() {
         <SubNav />
         <Hero />
         <GallerySection />
-        <PromptsSection />
+        <VideoSection />
         <Footer />
       </div>
       <FavoritesDrawer open={favOpen} onClose={() => setFavOpen(false)} />

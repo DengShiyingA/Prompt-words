@@ -5,7 +5,7 @@ import { readFileSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import db from './db.js'
-import { fetchGallery, fetchPrompts, clearCache, fetchPageImageUrl } from './notion.js'
+import { fetchGallery, fetchPrompts, fetchVideos, clearCache, fetchPageImageUrl } from './notion.js'
 
 // 加载 .env
 try {
@@ -193,10 +193,25 @@ app.delete('/api/prompts/:id', requireAdmin, (req, res) => {
   res.json({ ok: true })
 })
 
+// ── Videos API ────────────────────────────────────────
+app.get('/api/videos', async (_req, res) => {
+  try {
+    if (USE_NOTION()) {
+      return res.json(await fetchVideos())
+    }
+    res.json([])
+  } catch (e) {
+    console.error('Videos fetch error:', e.message)
+    res.status(500).json({ error: e.message })
+  }
+})
+
 // ── 图片代理（Notion 上传图片 URL 会过期，通过此接口每次实时获取）────
+// ?field=Cover 可指定取 Cover 字段而非默认 Image 字段
 app.get('/api/img/:id', async (req, res) => {
   try {
-    const url = await fetchPageImageUrl(req.params.id)
+    const field = req.query.field || 'Image'
+    const url = await fetchPageImageUrl(req.params.id, field)
     if (!url) return res.status(404).json({ error: '图片不存在' })
     res.redirect(302, url)
   } catch (e) {
