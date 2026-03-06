@@ -52,8 +52,8 @@ export async function fetchGallery() {
   return cached('gallery', async () => {
     const dbId = process.env.NOTION_GALLERY_DB
     if (!dbId) return []
-    const response = await getNotion().dataSources.query({
-      data_source_id: dbId,
+    const response = await getNotion().databases.query({
+      database_id: dbId,
       filter: { property: 'Image', files: { is_not_empty: true } },
       sorts: [{ timestamp: 'created_time', direction: 'descending' }],
     })
@@ -79,8 +79,8 @@ export async function fetchPrompts() {
   return cached('prompts', async () => {
     const dbId = process.env.NOTION_PROMPTS_DB
     if (!dbId) return {}
-    const response = await getNotion().dataSources.query({
-      data_source_id: dbId,
+    const response = await getNotion().databases.query({
+      database_id: dbId,
       sorts: [{ property: 'Category', direction: 'ascending' }],
     })
     const map = {}
