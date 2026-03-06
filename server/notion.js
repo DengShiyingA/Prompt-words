@@ -36,41 +36,40 @@ function text(prop) {
 }
 
 // 直接获取某个 page 的最新图片 URL（用于代理接口，绕过过期问题）
-export async function fetchPageImageUrl(pageId, field = 'Image') {
+export async function fetchPageImageUrl(pageId, field = '图片 Image') {
   const page = await getNotion().pages.retrieve({ page_id: pageId })
   return text(page.properties[field])
 }
 
 // ── Gallery：从 Notion 数据库读取图片 ────────────────────
 // Notion 数据库列（属性名区分大小写）：
-//   Name (title)           - 图片标题
-//   Image (files & media)  - 上传的图片文件
-//   Prompt (rich_text)     - 提示词
-//   Model (select)         - 模型名称
-//   Tags (multi_select)    - 标签
+//   标题 Name (title)           - 图片标题
+//   图片 Image (files & media)  - 上传的图片文件
+//   提示词 Prompt (rich_text)   - 提示词
+//   模型 Model (select)         - 模型名称
+//   标签 Tags (multi_select)    - 标签
 export async function fetchGallery() {
   return cached('gallery', async () => {
     const dbId = process.env.NOTION_GALLERY_DB
     if (!dbId) return []
     const response = await getNotion().databases.query({
       database_id: dbId,
-      filter: { property: 'Image', files: { is_not_empty: true } },
+      filter: { property: '图片 Image', files: { is_not_empty: true } },
       sorts: [{ timestamp: 'created_time', direction: 'descending' }],
     })
     return response.results.map(page => ({
       id: page.id,
-      // img 指向我们自己的代理接口，避免 Notion 临时 URL 过期
       img: `/api/img/${page.id}`,
-      prompt: text(page.properties['Prompt']),
-      model: text(page.properties['Model']),
-      tags: text(page.properties['Tags']),
+      prompt: text(page.properties['提示词 Prompt']),
+      model: text(page.properties['模型 Model']),
+      tags: text(page.properties['标签 Tags']),
       created_at: Math.floor(new Date(page.created_time).getTime() / 1000),
     }))
   })
 }
 
 // ── Videos：从 Notion 数据库读取视频提示词 ────────────────
-// 字段：Name(title) | Video_URL(url) | Cover(files) | Prompt(rich_text) | Model(select) | Tags(multi_select)
+// 字段：标题 Name(title) | 视频链接 Video_URL(url) | 封面图 Cover(files) | 提示词 Prompt(rich_text) | 模型 Model(select) | 标签 Tags(multi_select)
 export async function fetchVideos() {
   return cached('videos', async () => {
     const dbId = process.env.NOTION_VIDEO_DB
@@ -81,12 +80,12 @@ export async function fetchVideos() {
     })
     return response.results.map(page => ({
       id: page.id,
-      title: text(page.properties['Name']),
-      video_url: text(page.properties['Video_URL']),
-      cover: text(page.properties['Cover']) ? `/api/img/${page.id}?field=Cover` : null,
-      prompt: text(page.properties['Prompt']),
-      model: text(page.properties['Model']),
-      tags: text(page.properties['Tags']),
+      title: text(page.properties['标题 Name']),
+      video_url: text(page.properties['视频链接 Video_URL']),
+      cover: text(page.properties['封面图 Cover']) ? `/api/img/${page.id}?field=封面图 Cover` : null,
+      prompt: text(page.properties['提示词 Prompt']),
+      model: text(page.properties['模型 Model']),
+      tags: text(page.properties['标签 Tags']),
       created_at: Math.floor(new Date(page.created_time).getTime() / 1000),
     }))
   })
