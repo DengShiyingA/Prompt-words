@@ -8,9 +8,9 @@ export function Hero() {
   return (
     <section className="hero section-container">
       <motion.div style={{ opacity }}>
-        <p className="hero-subtitle">提示词专业版</p>
+        <p className="hero-subtitle">全网最全提示词效果库</p>
         <h1 className="hero-title text-gradient">
-          为你的日常 AI 工作流<br />打造的最强工具。
+          发现让 AI 真正好用<br />的提示词。
         </h1>
       </motion.div>
 
@@ -34,7 +34,7 @@ export function Hero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.8 }}
       >
-        简单得像魔法一样。
+        收录图片、视频生成提示词，点击即可一键复制使用
       </motion.p>
     </section>
   )
