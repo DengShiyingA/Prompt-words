@@ -5,6 +5,7 @@ import { readFileSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import db from './db.js'
+import { fetchGallery, fetchPrompts, clearCache, fetchPageImageUrl } from './notion.js'
 
 // 加载 .env
 try {
@@ -16,6 +17,7 @@ try {
   }
 } catch {}
 
+const USE_NOTION = () => !!process.env.NOTION_TOKEN
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme_secret'
 const PORT = process.env.PORT || 3001
@@ -36,13 +38,13 @@ function requireAdmin(req, res, next) {
   }
 }
 
-// ── 工具函数 ──────────────────────────────────────────
+// ── 工具函数：给 SQLite 行附加点赞/收藏计数 ──────────────
 function withCounts(rows, userId) {
   return rows.map(row => {
     const likes = db.prepare('SELECT COUNT(*) as n FROM likes WHERE gallery_id=?').get(row.id).n
     const liked = userId ? !!db.prepare('SELECT 1 FROM likes WHERE gallery_id=? AND user_id=?').get(row.id, userId) : false
     const favorited = userId ? !!db.prepare('SELECT 1 FROM favorites WHERE gallery_id=? AND user_id=?').get(row.id, userId) : false
-    return { ...row, tags: JSON.parse(row.tags), likes, liked, favorited }
+    return { ...row, tags: Array.isArray(row.tags) ? row.tags : JSON.parse(row.tags || '[]'), likes, liked, favorited }
   })
 }
 
@@ -55,10 +57,24 @@ app.post('/api/admin/login', (req, res) => {
 })
 
 // ── Gallery API ───────────────────────────────────────
-app.get('/api/gallery', (req, res) => {
+app.get('/api/gallery', async (req, res) => {
   const userId = req.headers['x-user-id'] || null
-  const rows = db.prepare('SELECT * FROM gallery ORDER BY created_at DESC').all()
-  res.json(withCounts(rows, userId))
+  try {
+    if (USE_NOTION()) {
+      const items = await fetchGallery()
+      return res.json(items.map(item => {
+        const likes = db.prepare('SELECT COUNT(*) as n FROM likes WHERE gallery_id=?').get(item.id).n
+        const liked = userId ? !!db.prepare('SELECT 1 FROM likes WHERE gallery_id=? AND user_id=?').get(item.id, userId) : false
+        const favorited = userId ? !!db.prepare('SELECT 1 FROM favorites WHERE gallery_id=? AND user_id=?').get(item.id, userId) : false
+        return { ...item, likes, liked, favorited }
+      }))
+    }
+    const rows = db.prepare('SELECT * FROM gallery ORDER BY created_at DESC').all()
+    res.json(withCounts(rows, userId))
+  } catch (e) {
+    console.error('Gallery fetch error:', e.message)
+    res.status(500).json({ error: e.message })
+  }
 })
 
 app.post('/api/gallery', requireAdmin, (req, res) => {
@@ -89,13 +105,14 @@ app.delete('/api/gallery/:id', requireAdmin, (req, res) => {
 app.post('/api/gallery/:id/like', (req, res) => {
   const { userId } = req.body
   if (!userId) return res.status(400).json({ error: '缺少 userId' })
-  const exists = db.prepare('SELECT 1 FROM likes WHERE gallery_id=? AND user_id=?').get(req.params.id, userId)
+  const id = req.params.id
+  const exists = db.prepare('SELECT 1 FROM likes WHERE gallery_id=? AND user_id=?').get(id, userId)
   if (exists) {
-    db.prepare('DELETE FROM likes WHERE gallery_id=? AND user_id=?').run(req.params.id, userId)
+    db.prepare('DELETE FROM likes WHERE gallery_id=? AND user_id=?').run(id, userId)
   } else {
-    db.prepare('INSERT INTO likes (gallery_id, user_id) VALUES (?, ?)').run(req.params.id, userId)
+    db.prepare('INSERT INTO likes (gallery_id, user_id) VALUES (?, ?)').run(id, userId)
   }
-  const count = db.prepare('SELECT COUNT(*) as n FROM likes WHERE gallery_id=?').get(req.params.id).n
+  const count = db.prepare('SELECT COUNT(*) as n FROM likes WHERE gallery_id=?').get(id).n
   res.json({ liked: !exists, count })
 })
 
@@ -103,37 +120,59 @@ app.post('/api/gallery/:id/like', (req, res) => {
 app.post('/api/gallery/:id/favorite', (req, res) => {
   const { userId } = req.body
   if (!userId) return res.status(400).json({ error: '缺少 userId' })
-  const exists = db.prepare('SELECT 1 FROM favorites WHERE gallery_id=? AND user_id=?').get(req.params.id, userId)
+  const id = req.params.id
+  const exists = db.prepare('SELECT 1 FROM favorites WHERE gallery_id=? AND user_id=?').get(id, userId)
   if (exists) {
-    db.prepare('DELETE FROM favorites WHERE gallery_id=? AND user_id=?').run(req.params.id, userId)
+    db.prepare('DELETE FROM favorites WHERE gallery_id=? AND user_id=?').run(id, userId)
   } else {
-    db.prepare('INSERT INTO favorites (gallery_id, user_id) VALUES (?, ?)').run(req.params.id, userId)
+    db.prepare('INSERT INTO favorites (gallery_id, user_id) VALUES (?, ?)').run(id, userId)
   }
   res.json({ favorited: !exists })
 })
 
-app.get('/api/favorites', (req, res) => {
+app.get('/api/favorites', async (req, res) => {
   const userId = req.headers['x-user-id']
   if (!userId) return res.json([])
-  const rows = db.prepare(`
-    SELECT g.* FROM gallery g
-    INNER JOIN favorites f ON f.gallery_id = g.id
-    WHERE f.user_id = ?
-    ORDER BY f.id DESC
-  `).all(userId)
-  res.json(withCounts(rows, userId))
+  try {
+    if (USE_NOTION()) {
+      const favoriteRows = db.prepare('SELECT gallery_id FROM favorites WHERE user_id=? ORDER BY id DESC').all(userId)
+      const ids = new Set(favoriteRows.map(r => r.gallery_id))
+      if (!ids.size) return res.json([])
+      const all = await fetchGallery()
+      return res.json(all.filter(item => ids.has(item.id)).map(item => {
+        const likes = db.prepare('SELECT COUNT(*) as n FROM likes WHERE gallery_id=?').get(item.id).n
+        return { ...item, likes, liked: false, favorited: true }
+      }))
+    }
+    const rows = db.prepare(`
+      SELECT g.* FROM gallery g
+      INNER JOIN favorites f ON f.gallery_id = g.id
+      WHERE f.user_id = ?
+      ORDER BY f.id DESC
+    `).all(userId)
+    res.json(withCounts(rows, userId))
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
 })
 
 // ── Prompts API ───────────────────────────────────────
-app.get('/api/prompts', (_req, res) => {
-  const rows = db.prepare('SELECT * FROM prompts ORDER BY category, created_at').all()
-  // 按分类分组
-  const map = {}
-  for (const row of rows) {
-    if (!map[row.category]) map[row.category] = []
-    map[row.category].push(row)
+app.get('/api/prompts', async (_req, res) => {
+  try {
+    if (USE_NOTION()) {
+      return res.json(await fetchPrompts())
+    }
+    const rows = db.prepare('SELECT * FROM prompts ORDER BY category, created_at').all()
+    const map = {}
+    for (const row of rows) {
+      if (!map[row.category]) map[row.category] = []
+      map[row.category].push(row)
+    }
+    res.json(map)
+  } catch (e) {
+    console.error('Prompts fetch error:', e.message)
+    res.status(500).json({ error: e.message })
   }
-  res.json(map)
 })
 
 app.post('/api/prompts', requireAdmin, (req, res) => {
@@ -154,7 +193,24 @@ app.delete('/api/prompts/:id', requireAdmin, (req, res) => {
   res.json({ ok: true })
 })
 
-// ── 健康检查 ──────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ ok: true }))
+// ── 图片代理（Notion 上传图片 URL 会过期，通过此接口每次实时获取）────
+app.get('/api/img/:id', async (req, res) => {
+  try {
+    const url = await fetchPageImageUrl(req.params.id)
+    if (!url) return res.status(404).json({ error: '图片不存在' })
+    res.redirect(302, url)
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
+})
 
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`))
+// ── 刷新 Notion 缓存 ───────────────────────────────────
+app.post('/api/admin/refresh-cache', requireAdmin, (_req, res) => {
+  clearCache()
+  res.json({ ok: true })
+})
+
+// ── 健康检查 ──────────────────────────────────────────
+app.get('/health', (_req, res) => res.json({ ok: true, notion: USE_NOTION() }))
+
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT} [Notion: ${USE_NOTION()}]`))

@@ -29,6 +29,14 @@ Page is composed of: `Nav` + `SubNav` (sticky, scroll-aware) → `Hero` (fullscr
 
 **Animation**: Framer Motion `motion` components with `whileInView` + `viewport={{ once: true }}` for scroll-triggered entrance animations. `useScroll` + `useTransform` for parallax in Hero.
 
+## Backend
+
+Express server in [server/index.js](server/index.js), SQLite via `better-sqlite3` in [server/db.js](server/db.js). Run with `node server/index.js`.
+
+**Notion CMS**: Set `NOTION_TOKEN`, `NOTION_GALLERY_DB`, `NOTION_PROMPTS_DB` in `server/.env` to enable. When set, gallery and prompts are fetched from Notion (60s cache) instead of SQLite. Likes/favorites always stored in SQLite. See [server/notion.js](server/notion.js) for expected Notion property names.
+
+**Deployment**: Server at `38.76.199.94`, path `/www/wwwroot/tsc.dengshiying.com`. Backend runs on PM2 (`tsc-server`, port 3002). Nginx proxies `/api/` → `localhost:3002`, serves `dist/` as static files.
+
 ## ESLint Notes
 
 - `no-unused-vars` is set to error, but variables matching `^[A-Z_]` (uppercase or underscore-prefixed) are ignored.
