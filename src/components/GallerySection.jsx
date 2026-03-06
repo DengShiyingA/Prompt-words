@@ -17,9 +17,9 @@ function CopyButton({ text }) {
       onClick={handleCopy}
       style={{
         display: 'flex', alignItems: 'center', gap: 5,
-        background: copied ? '#34c759' : 'rgba(255,255,255,0.15)',
+        background: copied ? '#34c759' : 'rgba(0,0,0,0.06)',
         backdropFilter: 'blur(8px)',
-        color: '#fff', border: '1px solid rgba(255,255,255,0.2)',
+        color: copied ? '#fff' : '#1d1d1f', border: '1px solid rgba(0,0,0,0.08)',
         borderRadius: 980, padding: '6px 12px',
         fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s',
       }}
@@ -37,7 +37,7 @@ function LightboxModal({ item, onClose, onLike, onFavorite }) {
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 99999,
-        background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)',
+        background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(24px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
       }}
     >
